@@ -10,7 +10,6 @@ $(document).ready(function () {
         }
     });
 
-    // 2. زر متابعة لإظهار الفورم
     $("#continueBtn").on("click", function () {
         var selectedCount = $(".select-car:checked").length;
         if (selectedCount === 0) {
@@ -18,18 +17,20 @@ $(document).ready(function () {
             $("#bookingFormContainer").slideUp(200);
         } else {
             $("#carSelectError").text("");
-            $("#bookingFormContainer").slideDown(400);
+            $("#bookingFormContainer").slideDown(400, function () {
+                $("html, body").animate({
+                    scrollTop: $("#bookingFormContainer").offset().top - 20
+                }, 400);
+            });
         }
     });
 
-    // إزالة رسالة خطأ اختيار السيارة عند تحديد أي سيارة
     $(".select-car").on("change", function () {
         if ($(".select-car:checked").length > 0) {
             $("#carSelectError").text("");
         }
     });
 
-    // 3. التحقق الفوري من الاسم الكامل أثناء الكتابة (الاسم والكنية وبالعربي حصراً)
     $("#fullName").on("input", function () {
         var val = $(this).val();
         var trimmedVal = val.trim();
@@ -49,7 +50,6 @@ $(document).ready(function () {
         }
     });
 
-    // 4. منع كتابة المحارف في خانة الرقم الوطني (أرقام فقط) والتحقق الفوري
     $("#nationalId").on("input", function () {
         this.value = this.value.replace(/[^0-9]/g, "");
         var val = $(this).val();
@@ -66,7 +66,6 @@ $(document).ready(function () {
         }
     });
 
-    // 5. التحقق الفوري من تاريخ البداية وتاريخ النهاية
     $("#startDate, #endDate").on("change input", function () {
         var startVal = $("#startDate").val();
         var endVal = $("#endDate").val();
@@ -88,7 +87,6 @@ $(document).ready(function () {
         }
     });
 
-    // 6. منع كتابة المحارف في خانة الموبايل (أرقام فقط) والتحقق الفوري لـ Syriatel و MTN
     $("#mobile").on("input", function () {
         this.value = this.value.replace(/[^0-9]/g, "");
         var val = $(this).val();
@@ -104,7 +102,6 @@ $(document).ready(function () {
         }
     });
 
-    // 7. التحقق الفوري من البريد الإلكتروني مع إظهار مثال عن الصيغة الصحيحة
     $("#email").on("input", function () {
         var val = $(this).val().trim();
         if (val === "") {
@@ -119,14 +116,18 @@ $(document).ready(function () {
         }
     });
 
-    // إغلاق نافذة النتيجة المنبثقة
     $("#closeModalBtn").on("click", function () {
         $("#resultModalOverlay").fadeOut(250);
     });
 
+    $("#resultModalOverlay").on("click", function (e) {
+        if ($(e.target).is("#resultModalOverlay")) {
+            $(this).fadeOut(250);
+        }
+    });
+
 });
 
-// الدالة الرئيسية عند الضغط على زر "إرسال"
 function validateAndCalculate() {
     var fullName = document.getElementById("fullName").value.trim();
     var nationalId = document.getElementById("nationalId").value.trim();
@@ -137,14 +138,12 @@ function validateAndCalculate() {
 
     var isValid = true;
 
-    // التحقق من اختيار سيارة واحدة على الأقل
     var selectedCheckboxes = document.querySelectorAll(".select-car:checked");
     if (selectedCheckboxes.length === 0) {
         $("#carSelectError").text("يرجى اختيار سيارة واحدة على الأقل من الجدول.");
         return false;
     }
 
-    // 1. فحص الاسم الكامل (اختياري، ولكن إن وُجد يجب أن يكون اسم وكنية بالعربي)
     if (fullName !== "") {
         var fullNameRegex = /^[\u0621-\u064A]+\s+[\u0621-\u064A\s]+$/;
         if (!fullNameRegex.test(fullName)) {
@@ -155,7 +154,6 @@ function validateAndCalculate() {
         }
     }
 
-    // 2. فحص الرقم الوطني (إلزامي)
     var nationalIdRegex = /^(0[1-9]|1[0-4])\d{9}$/;
     if (nationalId === "") {
         $("#nidError").text("حقل الرقم الوطني إلزامي الإدخال.");
@@ -167,7 +165,6 @@ function validateAndCalculate() {
         $("#nidError").text("");
     }
 
-    // 3. فحص تاريخي البداية والنهاية (إلزاميان)
     if (startDateStr === "") {
         $("#startDateError").text("تاريخ بداية التأجير إلزامي الإدخال.");
         isValid = false;
@@ -189,7 +186,6 @@ function validateAndCalculate() {
         }
     }
 
-    // 4. فحص رقم الموبايل (اختياري، وإن وُجد يطابق Syriatel أو MTN)
     if (mobile !== "") {
         var syrianMobileRegex = /^09[345689]\d{7}$/;
         if (!syrianMobileRegex.test(mobile)) {
@@ -200,7 +196,6 @@ function validateAndCalculate() {
         }
     }
 
-    // 5. فحص البريد الإلكتروني (اختياري، وإن وُجد يطابق الصيغة)
     if (email !== "") {
         var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
@@ -215,7 +210,6 @@ function validateAndCalculate() {
         return false;
     }
 
-    // 6. الحسابات وعرض النتيجة في النافذة بمنتصف الصفحة
     var startObj = new Date(startDateStr);
     var endObj = new Date(endDateStr);
     var diffTime = endObj.getTime() - startObj.getTime();
@@ -237,14 +231,12 @@ function validateAndCalculate() {
     }
     carsHtmlList += "</ul>";
 
-    // تطبيق خصم 10% في حال تجاوزت المدة 7 أيام
     var discountAmount = 0;
     if (rentalDays > 7) {
         discountAmount = totalBeforeDiscount * 0.10;
     }
     var finalAmount = totalBeforeDiscount - discountAmount;
 
-    // بناء تفاصيل الحجز شاملة معلومات مقدم الطلب والسيارات والحساب النهائي
     var customerInfoHtml = "<p>" +
         "<strong>الاسم الكامل:</strong> " + (fullName !== "" ? fullName : "غير مدخل") + "<br />" +
         "<strong>الرقم الوطني:</strong> " + nationalId + "<br />" +
@@ -262,11 +254,9 @@ function validateAndCalculate() {
         "<p><strong>المبلغ الإجمالي النهائي:</strong> " + finalAmount + " ل.س</p>" +
         "</div>";
 
-    // عرض النافذة المنبثقة في منتصف الصفحة
     $("#resultContent").html(resultHtml);
     $("#resultModalOverlay").fadeIn(300);
 
-    // تفريغ جميع خانات الفورم والرسائل بعد الإرسال وإبقاء المعلومات داخل نافذة تفاصيل الحجز فقط
     document.getElementById("rentalForm").reset();
     $(".error-msg").text("");
 
